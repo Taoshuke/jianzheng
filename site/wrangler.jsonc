@@ -11,5 +11,5 @@
   // 只用正式域名，不开 workers.dev 地址
   "workers_dev": false,
   "preview_urls": false,
-  "routes": [{ "pattern": "jianzheng.heibox.cc", "custom_domain": true }]
+  "routes": [{ "pattern": "zgzj.heibox.cc", "custom_domain": true }]
 }

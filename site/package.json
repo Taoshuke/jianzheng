@@ -1,7 +1,7 @@
 {
   "name": "jianzheng-site",
   "private": true,
-  "description": "把仓库里的 Markdown 生成 jianzheng.heibox.cc 的静态页面",
+  "description": "把仓库里的 Markdown 生成 zgzj.heibox.cc 的静态页面",
   "scripts": {
     "build": "node build.mjs",
     "dev": "node build.mjs && wrangler dev",
