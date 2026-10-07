@@ -2,7 +2,7 @@
 
 这个目录生成 [zgzj.heibox.cc](https://zgzj.heibox.cc)。仓库里其余的 Markdown 是内容，这里只放把它们做成网页的代码，网站不读本目录里的任何 Markdown。
 
-- `build.mjs`：把仓库里的 Markdown 转成静态页面，输出到 `dist/`。网址就是仓库路径：`目录/文件.md` 对应 `/目录/文件`，目录里的 `README.md` 对应 `/目录/`，根目录的 `README.md` 对应 `/关于`
+- `build.mjs`：把仓库里的 Markdown 转成静态页面，输出到 `dist/`。网址就是仓库路径：`目录/文件.md` 对应 `/目录/文件`，目录里的 `README.md` 对应 `/目录/`；关于页 `/关于` 取 `site/about.md`，根目录的 `README.md` 不上网站
 - `site.config.json`：站点副标题，以及各专辑的题记
 - `public/`：样式、脚本、字体和表情图，原样复制进 `dist/`
 - `wrangler.jsonc`：Cloudflare Worker 配置，纯静态资源，只绑 zgzj.heibox.cc，不开 workers.dev 地址

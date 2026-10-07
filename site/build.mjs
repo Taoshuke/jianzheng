@@ -1,5 +1,5 @@
 // 把仓库里的 Markdown 生成静态页面，输出到 dist/，由 Worker 的静态资源功能托管。
-// 网址直接用仓库里的中文路径：a/b.md → /a/b，目录的 README.md → /a/，根目录 README.md → /关于。
+// 网址直接用仓库里的中文路径：a/b.md → /a/b，目录的 README.md → /a/；关于页取 site/about.md，根目录 README.md 只给 GitHub 上看仓库的人。
 import { Marked } from "marked";
 import fs from "node:fs";
 import path from "node:path";
@@ -444,8 +444,9 @@ for (const c of Object.values(collections)) {
 
 // ----- 首页 -----
 
-const readme = readText("README.md");
-const lead = (readme.replace(/^# .*\n+/, "").split(/\n\n/)[0] || "").trim();
+// 关于页写给网站读者，和仓库 README 分开
+const about = fs.readFileSync(path.join(SITE_DIR, "about.md"), "utf8").replace(/\r\n/g, "\n");
+const aboutLead = (about.replace(/^# .*\n+/, "").split(/\n\n/)[0] || "").trim();
 
 // 首页导语：纯文字，依据 README 另写给网站读者的，存在 site.config.json 的 intro 里；
 // 文中提到 GitHub 的地方链到仓库的 Issue 页
@@ -507,8 +508,8 @@ ${feedItems.join("\n")}
 // ----- 关于、404 -----
 
 write(`${ABOUT_SLUG}.html`, layout({
-  title: ABOUT_SLUG, description: lead, url: `/${ABOUT_SLUG}`, bodyClass: "is-article",
-  main: `<article class="article article--page"><p class="kicker kicker--article">${HOME_CRUMB}<span>关于</span></p><div class="prose">${renderMd(readme, "README.md")}</div></article>`,
+  title: ABOUT_SLUG, description: aboutLead, url: `/${ABOUT_SLUG}`, bodyClass: "is-article",
+  main: `<article class="article article--page"><p class="kicker kicker--article">${HOME_CRUMB}<span>关于</span></p><div class="prose">${renderMd(about, "README.md")}</div></article>`,
 }));
 write("404.html", layout({
   title: "找不到页面", url: "/404",
@@ -523,7 +524,7 @@ const serifText = [
   ...articles.map((a) => a.title),
   ...Object.values(collections).flatMap((c) => [c.name, c.epigraph || ""]),
   ...articles.flatMap((a) => [...a.body.matchAll(/^#{1,3} (.+)$/gm)].map((m) => m[1])),
-  ...[...readme.matchAll(/^#{1,3} (.+)$/gm)].map((m) => m[1]),
+  ...[...about.matchAll(/^#{1,3} (.+)$/gm)].map((m) => m[1]),
   "0123456789",
 ].join("");
 const faces = (await Promise.all([
