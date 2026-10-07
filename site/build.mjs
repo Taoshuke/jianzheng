@@ -65,6 +65,7 @@ const plainTitle = (t) => t.replace(EMOJI_RE, "").trim();
 // ---------- 解析文章 ----------
 
 const BYLINE_RE = /^(?:(.+?) · )?(\d{4}-\d{2}(?:-\d{2})?)$/;
+const SOURCE_RE = /^(原帖|原文)：\s*(https?:\/\/\S+)$/;
 
 function parseArticle(rel) {
   const lines = readText(rel).split("\n");
@@ -75,6 +76,11 @@ function parseArticle(rel) {
   let author = null, date = null;
   const by = BYLINE_RE.exec(lines[i] || "");
   if (by) { author = by[1] || null; date = by[2]; i++; }
+  while (lines[i] === "") i++;
+  // 转载的文字在作者行下写「原帖：网址」或「原文：网址」，页面把它放在标题区显眼处
+  let source = null;
+  const src = SOURCE_RE.exec(lines[i] || "");
+  if (src) { source = { label: src[1], url: src[2] }; i++; }
   while (lines[i] === "") i++;
   let note = null;
   if ((lines[i] || "").startsWith("> **编者注**")) {
@@ -87,9 +93,10 @@ function parseArticle(rel) {
   const summary = firstPara.replace(/\*\*|`|\[|\]\([^)]*\)/g, "").slice(0, 140);
   const textLen = body.replace(/!\[[^\]]*\]\([^)]*\)|[#>*`\-|]|\s/g, "").length;
   return {
-    rel, url: urlFor(rel), title, author, date, note, body, summary,
+    rel, url: urlFor(rel), title, author, date, source, note, body, summary,
     minutes: Math.max(1, Math.round(textLen / CHARS_PER_MINUTE)),
     folder: rel.includes("/") ? rel.split("/")[0] : null,
+    group: rel.split("/").length > 2 ? rel.split("/")[1] : null,
   };
 }
 
@@ -305,37 +312,70 @@ const articles = mdFiles.filter((f) => !f.endsWith("README.md")).map(parseArticl
 const byRel = Object.fromEntries(articles.map((a) => [a.rel, a]));
 const byName = (a, b) => (a.rel < b.rel ? -1 : 1);
 
-// 专辑：目录里的文章按文件名排，即阅读顺序；目录 README 里链到的目录外文章算作「另见」
+// 专辑：目录里的文章按文件名排，即阅读顺序；目录 README 里链到的目录外文章算作「另见」。
+// 专辑下的子目录是一组连读的篇目（series），编号和上下篇导航都在组内；
+// 有子目录时，直接放在专辑目录里的文章另成一组记录（records），组名取专辑 README 里的二级标题
 const collections = {};
 for (const name of folderNames) {
   const readmeRel = `${name}/README.md`;
   const src = readText(readmeRel).replace(/^# .*\n+/, "");
   const parts = src.split(/\n(?:- .*\n?)+/);
-  const intro = (parts[0] || "").trim();
+  const intro = (src.split(/\n\n/)[0] || "").trim();
   const outro = parts.slice(1).join("\n").trim();
   const companions = [...outro.matchAll(/\]\(([^)]+\.md)\)/g)]
     .map((m) => path.posix.normalize(path.posix.join(name, decodeURIComponent(m[1]))))
-    .map((r) => byRel[r]).filter(Boolean);
+    .map((r) => byRel[r]).filter((a) => a && a.folder !== name);
+  const inFolder = articles.filter((a) => a.folder === name);
+  const direct = inFolder.filter((a) => !a.group).sort(byName);
+  const groupNames = [...new Set(inFolder.filter((a) => a.group).map((a) => a.group))].sort();
+  const series = groupNames.length
+    ? groupNames.map((g) => ({ name: g, url: `/${name}/${g}/`, items: inFolder.filter((a) => a.group === g).sort(byName) }))
+    : [{ name: null, url: `/${name}/`, items: direct }];
   collections[name] = {
-    name, intro, companions,
-    items: articles.filter((a) => a.folder === name).sort(byName),
+    name, intro, companions, series,
+    records: groupNames.length ? direct : [],
+    recordsLabel: (/^## (.+)$/m.exec(src) || [])[1] || "记录",
     ...(CONFIG.collections?.[name] || {}),
   };
 }
 const companionOf = {};
-for (const c of Object.values(collections)) for (const a of c.companions) companionOf[a.rel] = c;
+const seriesOf = {};
+const recordOf = {};
+for (const c of Object.values(collections)) {
+  for (const a of c.companions) companionOf[a.rel] = c;
+  for (const s of c.series) for (const a of s.items) seriesOf[a.rel] = { c, s };
+  for (const a of c.records) recordOf[a.rel] = c;
+}
 
 // ----- 片段 -----
 
-function contentsList(c, currentRel = null) {
-  return `<ol class="contents">${c.items.map((a, n) => `<li${a.rel === currentRel ? ' class="is-current" aria-current="page"' : ""}>
-  <a href="${encodeUrl(a.url)}"><span class="contents-no">${String(n + 1).padStart(2, "0")}</span><span class="contents-title">${emojify(esc(a.title))}</span><time class="contents-date">${fmtDate(a.date)}</time></a>
+// 记录组不编号，序号栏留空，标题和连读篇目对齐
+function contentsList(items, currentRel = null, { numbered = true } = {}) {
+  return `<ol class="contents">${items.map((a, n) => `<li${a.rel === currentRel ? ' class="is-current" aria-current="page"' : ""}>
+  <a href="${encodeUrl(a.url)}"><span class="contents-no">${numbered ? String(n + 1).padStart(2, "0") : ""}</span><span class="contents-title">${emojify(esc(a.title))}</span><time class="contents-date">${fmtDate(a.date)}</time></a>
 </li>`).join("")}</ol>`;
+}
+
+// 专辑里各组的小标题：组名（有组页时可点）加篇数
+const groupLabel = (label, count, url = null) =>
+  `<p class="group-label">${url ? `<a href="${encodeUrl(url)}">${esc(label)}</a>` : `<span>${esc(label)}</span>`}<span class="group-count">${count} 篇</span></p>`;
+
+// 专辑在首页、专辑页的篇目：连读的各组编号，记录组按日期不编号
+function collectionContents(c) {
+  const named = c.series.length > 1 || c.series[0].name;
+  return c.series.map((s) => `${named ? groupLabel(s.name, s.items.length, s.url) : ""}${contentsList(s.items)}`).join("")
+    + (c.records.length ? `${groupLabel(c.recordsLabel, c.records.length)}${contentsList(c.records, null, { numbered: false })}` : "");
 }
 
 function companionsLine(c) {
   if (!c.companions.length) return "";
   return `<p class="companions"><span class="label">另见</span>${c.companions.map((a) => `<a href="${encodeUrl(a.url)}">${emojify(esc(a.title))}</a>`).join("")}</p>`;
+}
+
+// 连读篇目读完时，指向同一专辑的记录组
+function recordsLine(c) {
+  if (!c.records.length) return "";
+  return `<p class="companions"><span class="label">${esc(c.recordsLabel)}</span>${c.records.map((a) => `<a href="${encodeUrl(a.url)}">${emojify(esc(a.title))}</a>`).join("")}</p>`;
 }
 
 // 专辑抬头：专辑名和题记，不做大横幅；专辑页上方留一行「首页 /」面包屑
@@ -349,7 +389,9 @@ function collectionHead(c, { asPageTitle = false } = {}) {
 }
 
 function indexRow(a, number = null) {
-  const kicker = a.folder || (companionOf[a.rel] ? `${companionOf[a.rel].name} · 另见` : "");
+  const kicker = a.group ? `${a.folder} · ${a.group}`
+    : recordOf[a.rel] ? `${a.folder} · ${recordOf[a.rel].recordsLabel}`
+    : a.folder || (companionOf[a.rel] ? `${companionOf[a.rel].name} · 另见` : "");
   return `<li class="index-row">
   <a href="${encodeUrl(a.url)}">
     ${number ? `<span class="index-no">${String(number).padStart(2, "0")}</span>` : `<time class="index-date">${fmtDate(a.date)}</time>`}
@@ -370,14 +412,18 @@ for (const a of articles) {
   const timeline = renderTimeline(a.body, a.rel);
   const { body: sectioned, edited, promoted } = applySections(a.rel, a.body);
   const bodyHtml = timeline || renderMd(sectioned, a.rel, headings);
-  const c = a.folder ? collections[a.folder] : null;
-  const idx = c ? c.items.indexOf(a) : -1;
-  const next = c && idx < c.items.length - 1 ? c.items[idx + 1] : null;
-  const prev = c && idx > 0 ? c.items[idx - 1] : null;
+  const { c, s } = seriesOf[a.rel] || {};
+  const rc = recordOf[a.rel];
+  const idx = s ? s.items.indexOf(a) : -1;
+  const next = s && idx < s.items.length - 1 ? s.items[idx + 1] : null;
+  const prev = s && idx > 0 ? s.items[idx - 1] : null;
   const home = companionOf[a.rel];
-  const kicker = c
-    ? `<a href="${encodeUrl(`/${c.name}/`)}">${esc(c.name)}</a><span>${String(idx + 1).padStart(2, "0")} / ${String(c.items.length).padStart(2, "0")}</span>`
-    : home ? `<a href="${encodeUrl(`/${home.name}/`)}">${esc(home.name)}</a><span>另见</span>` : "";
+  const crumbLink = (u, t) => `<a href="${encodeUrl(u)}">${esc(t)}</a>`;
+  const SEP = `<span class="crumb-sep" aria-hidden="true">/</span>`;
+  const kicker = s
+    ? `${crumbLink(`/${c.name}/`, c.name)}${s.name ? `${SEP}${crumbLink(s.url, s.name)}` : ""}<span>${String(idx + 1).padStart(2, "0")} / ${String(s.items.length).padStart(2, "0")}</span>`
+    : rc ? `${crumbLink(`/${rc.name}/`, rc.name)}<span>${esc(rc.recordsLabel)}</span>`
+    : home ? `${crumbLink(`/${home.name}/`, home.name)}<span>另见</span>` : "";
   // 目录：宽屏挂在正文右侧，窄屏放在编者注下面，可展开收起
   let toc = "", tocInline = "";
   if (headings.length >= 2) {
@@ -404,12 +450,14 @@ for (const a of articles) {
     </div></aside>`;
     tocInline = `<details class="toc-inline"><summary>目录<span>${tree.length} 节</span></summary>${note}${list}</details>`;
   }
-  const seriesEnd = c ? `<section class="series-end">
+  const seriesEnd = s ? `<section class="series-end">
   ${next ? `<a class="next-up" href="${encodeUrl(next.url)}"><span class="kicker">下一篇 · ${String(idx + 2).padStart(2, "0")}</span><span class="next-title">${emojify(esc(next.title))}</span><span class="next-summary">${esc(next.summary)}</span></a>`
-    : `<div class="next-up next-up--done"><span class="kicker">专辑读完了</span><span class="next-title">${esc(c.name)}</span>${companionsLine(c)}</div>`}
-  <div class="series-all"><p class="kicker">${esc(c.name)} · 全部 ${c.items.length} 篇</p>${contentsList(c, a.rel)}</div>
+    : `<div class="next-up next-up--done"><span class="kicker">${s.name ? "这一组读完了" : "专辑读完了"}</span><span class="next-title">${esc(c.name)}</span>${recordsLine(c)}${companionsLine(c)}</div>`}
+  <div class="series-all"><p class="kicker">${esc(s.name || c.name)} · 全部 ${s.items.length} 篇</p>${contentsList(s.items, a.rel)}</div>
   ${prev ? `<p class="prev-link"><a href="${encodeUrl(prev.url)}">← 上一篇：${emojify(esc(prev.title))}</a></p>` : ""}
-</section>` : home ? `<section class="series-end"><div class="series-all"><p class="kicker">${esc(home.name)} · ${home.items.length} 篇</p>${contentsList(home)}</div></section>` : "";
+</section>`
+    : rc ? `<section class="series-end">${rc.series.map((x) => `<div class="series-all"><p class="kicker">${esc(x.name || rc.name)} · ${x.items.length} 篇</p>${contentsList(x.items)}</div>`).join("")}<div class="series-all"><p class="kicker">${esc(rc.recordsLabel)} · ${rc.records.length} 篇</p>${contentsList(rc.records, a.rel, { numbered: false })}</div></section>`
+    : home ? `<section class="series-end"><div class="series-all"><p class="kicker">${esc(home.name)} · ${home.series[0].items.length} 篇</p>${contentsList(home.series[0].items)}</div></section>` : "";
 
   // 只走系统分享面板，浏览器不支持时按钮保持 hidden，由 site.js 判断后显示
   const shareBtn = (label, cls) => `<button class="share-btn${cls}" type="button" data-share-title="${esc(a.title)}" hidden><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8M5 11.5V20h14v-8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${label}</span></button>`;
@@ -419,8 +467,9 @@ for (const a of articles) {
     <p class="kicker kicker--article">${HOME_CRUMB}${kicker}</p>
     <h1 class="article-title">${emojify(esc(a.title))}</h1>
     <p class="byline">${a.author ? `<span>文／${esc(a.author)}</span>` : ""}${a.date ? `<time>${fmtDate(a.date)}</time>` : ""}<span>约 ${a.minutes} 分钟读完</span>${shareBtn("分享", "")}</p>
+    ${a.source ? `<p class="source-line"><span class="source-label">${esc(a.source.label)}</span><a href="${esc(a.source.url)}" target="_blank" rel="noopener">${esc(a.source.url.replace(/^https?:\/\//, ""))}<span aria-hidden="true"> ↗</span></a></p>` : ""}
   </header>
-  ${a.note ? `<aside class="editor-note"><p class="editor-note-label">编者注</p>${renderMd(a.note, a.rel)}</aside>` : ""}
+  ${a.note ? `<aside class="editor-note${/^#### /m.test(a.note) ? " editor-note--exchange" : ""}"><p class="editor-note-label">编者注</p>${renderMd(a.note, a.rel)}</aside>` : ""}
   ${tocInline}
   <div class="article-grid">
     <div class="prose">${bodyHtml}</div>
@@ -434,12 +483,22 @@ for (const a of articles) {
 // ----- 专辑页 -----
 
 for (const c of Object.values(collections)) {
+  const named = c.series.length > 1 || c.series[0].name;
   const main = `<section class="section section--first">
   ${collectionHead(c, { asPageTitle: true })}
-  <ol class="index">${c.items.map((a, n) => indexRow(a, n + 1)).join("")}</ol>
+  ${c.series.map((s) => `${named ? groupLabel(s.name, s.items.length, s.url) : ""}<ol class="index">${s.items.map((a, n) => indexRow(a, n + 1)).join("")}</ol>`).join("")}
+  ${c.records.length ? `${groupLabel(c.recordsLabel, c.records.length)}<ol class="index">${c.records.map((a) => indexRow(a)).join("")}</ol>` : ""}
   ${companionsLine(c)}
 </section>`;
   write(`${c.name}/index.html`, layout({ title: c.name, description: c.epigraph || stripTags(renderMd(c.intro, `${c.name}/README.md`)), url: `/${c.name}/`, main }));
+  // 组页：面包屑回到专辑，组名作页面标题
+  for (const s of c.series.filter((x) => x.name)) {
+    const sub = `<section class="section section--first">
+  <header class="collection-head"><p class="kicker">${HOME_CRUMB}<a href="${encodeUrl(`/${c.name}/`)}">${esc(c.name)}</a><span class="crumb-sep" aria-hidden="true">/</span></p><h1 class="collection-title">${esc(s.name)}</h1></header>
+  <ol class="index">${s.items.map((a, n) => indexRow(a, n + 1)).join("")}</ol>
+</section>`;
+    write(`${c.name}/${s.name}/index.html`, layout({ title: `${s.name} · ${c.name}`, description: c.epigraph || "", url: s.url, main: sub }));
+  }
 }
 
 // ----- 首页 -----
@@ -466,7 +525,7 @@ write("index.html", layout({
   </div>
   ${homeIntro}
 </header>
-${Object.values(collections).map((c) => `<section class="section">${collectionHead(c)}${contentsList(c)}${companionsLine(c)}</section>`).join("\n")}
+${Object.values(collections).map((c) => `<section class="section">${collectionHead(c)}${collectionContents(c)}${companionsLine(c)}</section>`).join("\n")}
 <section class="section">
   <h2 class="section-title"><span>全部文章</span><span class="section-count">${articles.length}</span></h2>
   <ol class="index">${latest.map((a) => indexRow(a)).join("")}</ol>
@@ -522,7 +581,9 @@ const serifText = [
   "篇目全部文章下一篇专辑读完了目录编者注这个页面不存在关于另见从第一篇读起",
   CONFIG.tagline,
   ...articles.map((a) => a.title),
-  ...Object.values(collections).flatMap((c) => [c.name, c.epigraph || ""]),
+  // 编者注里一来一回的引文，评论那一段用衬线粗体排
+  ...articles.filter((a) => a.note && /^#### /m.test(a.note)).map((a) => a.note),
+  ...Object.values(collections).flatMap((c) => [c.name, c.epigraph || "", ...c.series.map((s) => s.name || "")]),
   ...articles.flatMap((a) => [...a.body.matchAll(/^#{1,3} (.+)$/gm)].map((m) => m[1])),
   ...[...about.matchAll(/^#{1,3} (.+)$/gm)].map((m) => m[1]),
   "0123456789",

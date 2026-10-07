@@ -97,6 +97,11 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .epigraph { margin-top: 10px; font-family: var(--serif); font-size: calc(1rem * var(--font-scale)); color: var(--text-2); }
 .epigraph cite { margin-left: 12px; font-style: normal; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.05em; color: var(--text-3); }
 .section > .companions { margin-top: 20px; }
+/* 专辑里分组时每组上方一行小标题：组名加篇数 */
+.group-label { display: flex; justify-content: space-between; align-items: baseline; margin: 32px 0 10px; font-size: 0.86rem; font-weight: 600; color: var(--text); }
+.collection-head + .group-label { margin-top: 8px; }
+.group-label a:hover { color: var(--accent); }
+.group-count { font-family: var(--mono); font-size: 0.7rem; font-weight: 400; color: var(--text-3); }
 
 /* 篇目表：编号 + 题目 + 日期 */
 .contents { list-style: none; counter-reset: none; }
@@ -141,6 +146,11 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .article-title { font-family: var(--serif); font-weight: 700; font-size: calc(clamp(1.9rem, 4.2vw, 2.75rem) * var(--font-scale)); line-height: 1.32; letter-spacing: 0.01em; }
 .byline { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 22px; font-family: var(--mono); font-size: 0.75rem; color: var(--text-2); }
 .byline span:first-child { font-family: var(--sans); font-size: 0.85rem; color: var(--text); }
+/* 转载文字的原帖链接，紧接作者行 */
+.source-line { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; padding: 10px 14px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); font-size: 0.82rem; }
+.source-label { flex: none; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; color: var(--accent); }
+.source-line a { min-width: 0; font-family: var(--mono); font-size: 0.78rem; color: var(--text); overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.source-line a:hover { color: var(--accent); }
 
 .editor-note { margin: 32px 0 8px; padding: 22px 26px 20px; background: var(--surface); border: 1px solid var(--rule); border-top: 2px solid var(--accent); font-size: calc(0.93rem * var(--font-scale)); line-height: 1.78; color: var(--text-2); }
 .editor-note-label { margin-bottom: 8px; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.22em; color: var(--accent); }
@@ -148,6 +158,26 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 /* 编者注里引用的长段文字（如推文）：缩进一格、左侧细线，字色比注释略深，和编者自己的话分开 */
 .editor-note blockquote { margin: 0.9em 0; padding: 0.15em 0 0.15em 1.1em; border-left: 2px solid var(--rule-strong); color: var(--text); }
 .editor-note blockquote p + p { margin-top: 0.75em; }
+.editor-note hr { border: none; height: 1px; background: var(--rule); margin: 1em 0; }
+/* 编者注收一来一回两段别人的话（四级标题标明出自谁）：宽屏左右对照，左边评论像大字报，右边回复平实；
+   编者的话通栏压在下面。窄屏改成上下排，回复的小标题前加 ↳ 表示接着上一段 */
+.editor-note--exchange { display: grid; grid-template-columns: 1.25fr 1fr; column-gap: 18px; padding-bottom: 24px; }
+.editor-note--exchange > .editor-note-label { grid-column: 1 / -1; }
+.editor-note--exchange > h4 { margin: 6px 0 8px; font-family: var(--sans); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.1em; color: var(--text-3); }
+.editor-note--exchange > h4:nth-of-type(1) { grid-area: 2 / 1; }
+.editor-note--exchange > h4:nth-of-type(2) { grid-area: 2 / 2; }
+.editor-note--exchange > h4:nth-of-type(2)::before { content: "↳ "; color: var(--accent); }
+.editor-note--exchange > blockquote { margin: 0; padding: 18px; border: 0; border-radius: 4px; }
+.editor-note--exchange > blockquote:nth-of-type(1) { grid-area: 3 / 1; display: flex; align-items: center; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.editor-note--exchange > blockquote:nth-of-type(1) p { font-family: var(--serif); font-weight: 700; font-size: 1.1em; line-height: 1.9; letter-spacing: 0.03em; color: var(--accent); text-align: left; }
+.editor-note--exchange > blockquote:nth-of-type(2) { grid-area: 3 / 2; border: 1px solid var(--rule); background: var(--bg); color: var(--text); }
+.editor-note--exchange > p:last-child { grid-column: 1 / -1; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 1.04em; line-height: 1.9; color: var(--text); }
+@media (max-width: 640px) {
+  .editor-note--exchange { grid-template-columns: 1fr; }
+  .editor-note--exchange > blockquote:nth-of-type(1) p { font-size: 1.2em; letter-spacing: 0.06em; }
+  .editor-note--exchange > h4, .editor-note--exchange > blockquote { grid-area: auto !important; }
+  .editor-note--exchange > h4:nth-of-type(2) { margin-top: 18px; }
+}
 .editor-note a { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; word-break: break-all; }
 
 .article-grid { position: relative; padding-top: 36px; }
