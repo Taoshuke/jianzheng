@@ -265,6 +265,7 @@ function layout({ title, description = "", url, main, bodyClass = "" }) {
     </div>
   </div>
 </footer>
+<a class="to-top-btn" href="#" title="回到顶部" aria-label="回到顶部"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
 <div class="font-size" role="group" aria-label="字号">
   <button type="button" data-size="0" aria-label="小号字" aria-pressed="false">字</button>
   <button type="button" data-size="1" aria-label="中号字" aria-pressed="true">字</button>

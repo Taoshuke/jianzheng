@@ -277,6 +277,11 @@ a.next-up:hover .next-title { color: var(--accent); }
 .footer-base a:hover { color: var(--accent); }
 .to-top { color: var(--text-2); }
 
+/* ========== 回到顶部 ==========
+   常驻在字号按钮正上方，同一套边框和底色 */
+.to-top-btn { position: fixed; right: 24px; bottom: 76px; z-index: 90; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--rule-strong); border-radius: 50%; background: color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 2px 10px rgba(0,0,0,0.06); color: var(--text-2); transition: color 0.15s, border-color 0.15s, transform 0.15s; }
+.to-top-btn:hover { color: var(--text); border-color: var(--text); transform: translateY(-2px); }
+
 /* ========== 字号 ==========
    三个「字」由小到大并排，当前那个反白；点哪个就是哪档，不用猜点了以后会变成什么 */
 .font-size { position: fixed; bottom: 24px; right: 24px; z-index: 90; display: flex; align-items: center; gap: 2px; padding: 4px; border: 1px solid var(--rule-strong); border-radius: 999px; background: color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
@@ -305,6 +310,7 @@ a.next-up:hover .next-title { color: var(--accent); }
   .footer-cols { grid-template-columns: 1fr 1fr; gap: 28px 24px; }
   .footer-inner { padding-bottom: 88px; }
   .font-size { bottom: 14px; right: 14px; }
+  .to-top-btn { right: 14px; bottom: 66px; }
   .home-head { padding-top: 40px; }
   .home-moon { width: 40px; height: 40px; }
   .home-wordmark { width: 152px; height: 38px; }

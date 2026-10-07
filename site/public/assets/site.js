@@ -55,4 +55,11 @@
     var first = document.querySelector(".toc .toc-list--0 > .toc-item > a");
     if (first) setActive(first);
   }
+  // 回到顶部：平滑滚动；系统设了减少动态效果时直接跳
+  var topBtn = document.querySelector(".to-top-btn");
+  if (topBtn) topBtn.addEventListener("click", function (e) {
+    e.preventDefault();
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  });
 })();
