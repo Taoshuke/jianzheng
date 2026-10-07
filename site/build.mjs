@@ -379,9 +379,24 @@ for (const a of articles) {
     // 原文自带小标题（Markdown 标题或被升级的加粗分节句）时，注明只是「部分」由编者所加
     const hadOwn = promoted || /^#{2,4} /m.test(a.body);
     const note = edited ? `<p class="toc-note">${hadOwn ? "部分" : ""}小标题为编者所加</p>` : "";
-    const list = `<ol>${headings.map((h) => `<li class="toc-l${h.depth - top}"><a href="#${esc(h.id)}">${h.html}</a></li>`).join("")}</ol>`;
-    toc = `<aside class="toc" aria-label="本文目录"><p class="toc-label">目录</p>${note}${list}</aside>`;
-    tocInline = `<details class="toc-inline"><summary>目录<span>${headings.length} 节</span></summary>${note}${list}</details>`;
+    // 按层级拼成嵌套列表：顶层编号，下一层挂在所属的顶层节下面，再下一层挂在它下面
+    const tree = [];
+    for (const h of headings) {
+      const node = { h, children: [] };
+      const level = h.depth - top;
+      let parent = tree;
+      for (let l = 0; l < level && parent.length; l++) parent = parent[parent.length - 1].children;
+      parent.push(node);
+    }
+    const renderNodes = (nodes, level) => `<ol class="toc-list toc-list--${level}">${nodes.map((n, i) => `<li class="toc-item">
+      <a href="#${esc(n.h.id)}">${level === 0 ? `<span class="toc-no">${String(i + 1).padStart(2, "0")}</span>` : ""}<span class="toc-text">${n.h.html}</span></a>${n.children.length ? renderNodes(n.children, level + 1) : ""}</li>`).join("")}</ol>`;
+    const list = renderNodes(tree, 0);
+    toc = `<aside class="toc" aria-label="本文目录"><div class="toc-inner">
+      <p class="toc-head"><span>目录</span><span class="toc-count">${tree.length} 节</span></p>
+      ${list}
+      ${note}<a class="toc-top" href="#">回到顶部</a>
+    </div></aside>`;
+    tocInline = `<details class="toc-inline"><summary>目录<span>${tree.length} 节</span></summary>${note}${list}</details>`;
   }
   const seriesEnd = c ? `<section class="series-end">
   ${next ? `<a class="next-up" href="${encodeUrl(next.url)}"><span class="kicker">下一篇 · ${String(idx + 2).padStart(2, "0")}</span><span class="next-title">${emojify(esc(next.title))}</span><span class="next-summary">${esc(next.summary)}</span></a>`
@@ -391,6 +406,7 @@ for (const a of articles) {
 </section>` : home ? `<section class="series-end"><div class="series-all"><p class="kicker">${esc(home.name)} · ${home.items.length} 篇</p>${contentsList(home)}</div></section>` : "";
 
   const main = `<article class="article${timeline ? " article--timeline" : ""}${toc ? " article--toc" : ""}">
+  ${toc}
   <header class="article-head">
     <p class="kicker kicker--article">${HOME_CRUMB}${kicker}</p>
     <h1 class="article-title">${emojify(esc(a.title))}</h1>
@@ -400,7 +416,6 @@ for (const a of articles) {
   ${tocInline}
   <div class="article-grid">
     <div class="prose">${bodyHtml}</div>
-    ${toc}
   </div>
   ${seriesEnd}
 </article>`;
@@ -422,10 +437,14 @@ for (const c of Object.values(collections)) {
 
 const readme = readText("README.md");
 const lead = (readme.replace(/^# .*\n+/, "").split(/\n\n/)[0] || "").trim();
+
+// 首页导语：纯文字，依据 README 另写给网站读者的，存在 site.config.json 的 intro 里；
+// 文中提到 GitHub 的地方链到仓库的 Issue 页
+const homeIntro = CONFIG.intro.map((p) => `<p class="home-lead">${esc(p).replace("GitHub", `<a href="${REPO_URL}/issues">GitHub</a>`)}</p>`).join("\n  ");
 const latest = [...articles].sort((a, b) => (a.date === b.date ? byName(a, b) : a.date < b.date ? 1 : -1));
 write("index.html", layout({
   title: "",
-  description: lead,
+  description: CONFIG.intro[0],
   url: "/",
   main: `<header class="home-head">
   <div class="home-title-row">
@@ -435,7 +454,7 @@ write("index.html", layout({
     </h1>
     <p class="home-meta"><span>${esc(CONFIG.tagline)}</span><span>${articles.length} 篇 · 更新于 ${BUILD_DATE}</span></p>
   </div>
-  <p class="home-lead">${esc(lead)}</p>
+  ${homeIntro}
 </header>
 ${Object.values(collections).map((c) => `<section class="section">${collectionHead(c)}${contentsList(c)}${companionsLine(c)}</section>`).join("\n")}
 <section class="section">

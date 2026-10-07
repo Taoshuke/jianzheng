@@ -82,7 +82,11 @@ img.emoji { display: inline-block; width: 1em; height: 1em; margin: 0 0.06em; ve
 .home-wordmark { display: block; width: 192px; height: 48px; }
 .home-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-bottom: 4px; font-size: 0.8rem; color: var(--text-2); text-align: right; }
 .home-meta span + span { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-3); }
-.home-lead { max-width: 36em; margin-top: 28px; font-size: calc(1.1rem * var(--font-scale)); line-height: 1.9; color: var(--text); text-wrap: pretty; }
+/* 导语：纯文字，和最初那一段导语同一个样式，段落之间留一点距离 */
+.home-lead { max-width: 36em; margin-top: 28px; font-size: calc(1.1rem * var(--font-scale)); line-height: 1.9; color: var(--text); text-align: justify; text-justify: inter-character; text-wrap: pretty; }
+.home-lead + .home-lead { margin-top: 0.9em; }
+.home-lead a { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
+.home-lead a:hover { color: var(--accent); }
 
 /* ========== 专辑抬头 ========== */
 .collection-head { margin-bottom: 20px; }
@@ -176,21 +180,32 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .prose img:not(.emoji) { display: block; margin: 1.6em auto; border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px -12px rgba(0,0,0,0.12); }
 .prose p:has(> img:not(.emoji):only-child) { margin: 0; }
 
-/* 宽屏目录挂在正文右侧 */
+/* 宽屏目录：顶端和文章标题对齐，跟着滚动；顶层编号，下层只在读到所在那一节时展开 */
 .toc { display: none; }
+.article { position: relative; }
 @media (min-width: 1240px) {
-  .article--toc .toc { display: block; position: absolute; top: 36px; left: calc(100% + 24px); width: 210px; height: calc(100% - 36px); }
-  .toc > * { position: relative; }
-  .toc-label { position: sticky; top: 40px; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.2em; color: var(--text-3); margin-bottom: 10px; }
-  .toc ol { position: sticky; top: 72px; list-style: none; border-left: 1px solid var(--rule); }
-  .toc .toc-l1 a { padding-left: 26px; font-size: 0.76rem; }
-  .toc .toc-l2 a { padding-left: 38px; font-size: 0.74rem; }
-  .toc a { display: block; padding: 6px 0 6px 14px; margin-left: -1px; border-left: 1px solid transparent; font-size: 0.8rem; line-height: 1.5; color: var(--text-2); transition: all 0.15s; }
-  .toc a:hover, .toc a.is-active { color: var(--accent); border-left-color: var(--accent); }
+  .article--toc .toc { display: block; position: absolute; top: 72px; bottom: 0; left: calc(100% + 32px); width: 232px; }
+  .toc-inner { position: sticky; top: 40px; max-height: calc(100vh - 80px); overflow-y: auto; scrollbar-width: none; }
+  .toc-inner::-webkit-scrollbar { display: none; }
+  .toc-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 12px; margin-bottom: 6px; border-bottom: 1px solid var(--text); font-size: 0.82rem; font-weight: 700; color: var(--text); }
+  .toc-count { font-family: var(--mono); font-size: 0.68rem; font-weight: 400; color: var(--text-3); }
+  .toc-list { list-style: none; }
+  .toc-list--0 > .toc-item { border-bottom: 1px solid var(--rule); }
+  .toc-list--0 > .toc-item > a { display: grid; grid-template-columns: 26px 1fr; align-items: baseline; padding: 9px 0; font-size: 0.82rem; line-height: 1.5; color: var(--text-2); transition: color 0.15s; }
+  .toc-no { font-family: var(--mono); font-size: 0.66rem; color: var(--text-3); transition: color 0.15s; }
+  .toc-list--1, .toc-list--2 { display: none; padding: 0 0 8px 26px; }
+  .toc-item.is-open > .toc-list--1, .toc-list--1 .toc-item.is-open > .toc-list--2 { display: block; }
+  .toc-list--2 { padding: 0 0 2px 12px; }
+  .toc-list--1 a, .toc-list--2 a { display: block; position: relative; padding: 4px 0 4px 12px; font-size: 0.76rem; line-height: 1.5; color: var(--text-3); transition: color 0.15s; }
+  .toc-list--1 a::before, .toc-list--2 a::before { content: ""; position: absolute; left: 0; top: 0.95em; width: 4px; height: 1px; background: var(--rule-strong); }
+  .toc-inner a:hover, .toc-inner a:hover .toc-no { color: var(--accent); }
+  .toc-item.is-open > a { color: var(--text); font-weight: 600; }
+  .toc-item.is-open > a .toc-no { color: var(--accent); }
+  .toc-list--1 a.is-active, .toc-list--2 a.is-active { color: var(--accent); }
+  .toc-inner .toc-note { margin: 14px 0 0; font-size: 0.7rem; color: var(--text-3); }
+  .toc-top { display: inline-block; margin-top: 8px; font-size: 0.72rem; color: var(--text-3); }
 }
 
-.toc-note { font-size: 0.7rem; color: var(--text-3); margin: -4px 0 10px; }
-@media (min-width: 1240px) { .toc-note { position: sticky; top: 60px; } }
 
 /* 窄屏目录：编者注下面一块，默认收起 */
 .toc-inline { margin: 24px 0 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
@@ -200,11 +215,16 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .toc-inline[open] summary::after { content: "收起"; }
 .toc-inline summary span { margin-left: auto; margin-right: 14px; letter-spacing: 0.05em; color: var(--text-3); }
 .toc-inline .toc-note { margin: 0 0 8px; }
-.toc-inline ol { list-style: none; padding: 0 0 14px; }
+.toc-inline > .toc-list { padding-bottom: 14px; }
 .toc-inline a { display: block; padding: 5px 0; font-size: calc(0.9rem * var(--font-scale)); line-height: 1.5; color: var(--text-2); }
 .toc-inline a:hover { color: var(--accent); }
-.toc-inline .toc-l1 a { padding-left: 1.2em; font-size: calc(0.85rem * var(--font-scale)); }
-.toc-inline .toc-l2 a { padding-left: 2.4em; font-size: calc(0.82rem * var(--font-scale)); }
+.toc-inline .toc-note { font-size: 0.72rem; color: var(--text-3); }
+.toc-inline .toc-list { list-style: none; padding: 0; }
+.toc-inline .toc-list--0 > .toc-item > a { display: grid; grid-template-columns: 2rem 1fr; align-items: baseline; }
+.toc-inline .toc-no { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); }
+.toc-inline .toc-list--1 { padding-left: 2rem; }
+.toc-inline .toc-list--2 { padding-left: 1.2em; }
+.toc-inline .toc-list--1 a { font-size: calc(0.84rem * var(--font-scale)); color: var(--text-3); }
 @media (min-width: 1240px) { .toc-inline { display: none; } }
 
 /* 时间线：截图记录 */

@@ -35,21 +35,24 @@
     update();
   }
 
-  // 目录高亮当前小标题
-  var links = document.querySelectorAll(".toc a");
+  // 目录：读到哪一节，就展开那一节的顶层条目并高亮当前小标题
+  var links = document.querySelectorAll(".toc a[href^='#']");
   if (links.length && "IntersectionObserver" in window) {
     var map = {};
-    links.forEach(function (a) { map[decodeURIComponent(a.getAttribute("href").slice(1))] = a; });
+    links.forEach(function (a) { var id = a.getAttribute("href").slice(1); if (id) map[decodeURIComponent(id)] = a; });
     var current = null;
+    var setActive = function (a) {
+      if (current === a) return;
+      document.querySelectorAll(".toc .is-active, .toc .is-open").forEach(function (el) { el.classList.remove("is-active", "is-open"); });
+      current = a;
+      a.classList.add("is-active");
+      for (var li = a.parentElement; li && li.classList && li.classList.contains("toc-item"); li = li.parentElement.closest(".toc-item")) li.classList.add("is-open");
+    };
     var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting && map[e.target.id]) {
-          if (current) current.classList.remove("is-active");
-          current = map[e.target.id];
-          current.classList.add("is-active");
-        }
-      });
-    }, { rootMargin: "-20% 0px -70% 0px" });
+      entries.forEach(function (e) { if (e.isIntersecting && map[e.target.id]) setActive(map[e.target.id]); });
+    }, { rootMargin: "-15% 0px -75% 0px" });
     document.querySelectorAll(".prose h2[id], .prose h3[id], .prose h4[id]").forEach(function (h) { io.observe(h); });
+    var first = document.querySelector(".toc .toc-list--0 > .toc-item > a");
+    if (first) setActive(first);
   }
 })();
