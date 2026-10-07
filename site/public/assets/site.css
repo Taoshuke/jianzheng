@@ -82,8 +82,8 @@ img.emoji { display: inline-block; width: 1em; height: 1em; margin: 0 0.06em; ve
 .home-wordmark { display: block; width: 192px; height: 48px; }
 .home-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-bottom: 4px; font-size: 0.8rem; color: var(--text-2); text-align: right; }
 .home-meta span + span { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-3); }
-/* 导语：纯文字，和最初那一段导语同一个样式，段落之间留一点距离 */
-.home-lead { max-width: 36em; margin-top: 28px; font-size: calc(1.1rem * var(--font-scale)); line-height: 1.9; color: var(--text); text-align: justify; text-justify: inter-character; text-wrap: pretty; }
+/* 导语：纯文字，通栏排，左右边缘和抬头的横线对齐，两端对齐 */
+.home-lead { margin-top: 28px; font-size: calc(1.1rem * var(--font-scale)); line-height: 1.9; color: var(--text); text-align: justify; text-justify: inter-character; text-wrap: pretty; }
 .home-lead + .home-lead { margin-top: 0.9em; }
 .home-lead a { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
 .home-lead a:hover { color: var(--accent); }
