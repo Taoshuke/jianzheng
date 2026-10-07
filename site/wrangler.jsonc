@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "jianzheng",
+  "compatibility_date": "2026-10-01",
+  // 纯静态站，没有 Worker 脚本，请求全部交给静态资源处理
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  // 只用正式域名，不开 workers.dev 地址
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "jianzheng.heibox.cc", "custom_domain": true }]
+}
