@@ -17,6 +17,18 @@
     });
   });
 
+  // 分享：调用系统分享面板，不支持的浏览器不显示按钮
+  if (navigator.share) {
+    document.querySelectorAll(".share-btn").forEach(function (b) {
+      b.hidden = false;
+      b.addEventListener("click", function () {
+        var url = location.href.split("#")[0];
+        // 读者在面板里点取消会以 AbortError 结束，这不是错误
+        navigator.share({ title: b.dataset.shareTitle, url: url }).catch(function (e) { if (e.name !== "AbortError") throw e; });
+      });
+    });
+  }
+
   // 阅读进度：按正文区块计算，读到正文末尾即满
   var prose = document.querySelector(".is-article .prose");
   var bar = document.querySelector(".progress");

@@ -406,18 +406,21 @@ for (const a of articles) {
   ${prev ? `<p class="prev-link"><a href="${encodeUrl(prev.url)}">← 上一篇：${emojify(esc(prev.title))}</a></p>` : ""}
 </section>` : home ? `<section class="series-end"><div class="series-all"><p class="kicker">${esc(home.name)} · ${home.items.length} 篇</p>${contentsList(home)}</div></section>` : "";
 
+  // 只走系统分享面板，浏览器不支持时按钮保持 hidden，由 site.js 判断后显示
+  const shareBtn = (label, cls) => `<button class="share-btn${cls}" type="button" data-share-title="${esc(a.title)}" hidden><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8M5 11.5V20h14v-8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${label}</span></button>`;
   const main = `<article class="article${timeline ? " article--timeline" : ""}${toc ? " article--toc" : ""}">
   ${toc}
   <header class="article-head">
     <p class="kicker kicker--article">${HOME_CRUMB}${kicker}</p>
     <h1 class="article-title">${emojify(esc(a.title))}</h1>
-    <p class="byline">${a.author ? `<span>文／${esc(a.author)}</span>` : ""}${a.date ? `<time>${fmtDate(a.date)}</time>` : ""}<span>约 ${a.minutes} 分钟读完</span></p>
+    <p class="byline">${a.author ? `<span>文／${esc(a.author)}</span>` : ""}${a.date ? `<time>${fmtDate(a.date)}</time>` : ""}<span>约 ${a.minutes} 分钟读完</span>${shareBtn("分享", "")}</p>
   </header>
   ${a.note ? `<aside class="editor-note"><p class="editor-note-label">编者注</p>${renderMd(a.note, a.rel)}</aside>` : ""}
   ${tocInline}
   <div class="article-grid">
     <div class="prose">${bodyHtml}</div>
   </div>
+  <div class="share-end">${shareBtn("分享这篇文章", " share-btn--end")}</div>
   ${seriesEnd}
 </article>`;
   write(outFileFor(a.rel), layout({ title: a.title, description: a.summary, url: a.url, main, bodyClass: "is-article" }));

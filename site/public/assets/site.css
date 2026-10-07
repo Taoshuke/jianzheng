@@ -241,6 +241,14 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .tl-shots img:not(.emoji) { margin: 0; }
 
 /* ========== 读完：下一篇 + 全部篇目 ========== */
+/* 分享：标题下信息行的右端一个，正文结束处一个 */
+.share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font-family: var(--sans); font-size: 0.8rem; color: var(--text-2); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.share-btn[hidden] { display: none; }
+.share-btn:hover { color: var(--accent); }
+.byline .share-btn { margin-left: auto; }
+.share-end { display: flex; justify-content: center; margin-top: 56px; }
+.share-btn--end { gap: 8px; padding: 10px 22px; border: 1px solid var(--rule-strong); border-radius: 999px; font-size: 0.86rem; color: var(--text); }
+.share-btn--end:hover { border-color: var(--accent); }
 .series-end { margin: 72px 0 0; }
 .next-up { display: block; padding: 28px 0; border-top: 1px solid var(--text); border-bottom: 1px solid var(--rule); }
 .next-up .kicker { color: var(--accent); }
