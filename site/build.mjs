@@ -240,7 +240,7 @@ function layout({ title, description = "", url, main, bodyClass = "" }) {
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="alternate" type="application/atom+xml" title="${SITE_NAME}" href="/feed.xml">
-<script>try{var i=localStorage.getItem("font-size-index");if(i!==null)document.documentElement.style.setProperty("--font-scale",[0.9,1,1.12][+i]||1)}catch(e){}</script>
+<script>try{var i=localStorage.getItem("font-size-index");if(i!==null)document.documentElement.style.setProperty("--font-scale",[0.86,0.95,1.06][+i]||0.95)}catch(e){}</script>
 </head>
 <body class="${bodyClass}">
 <a class="skip-link" href="#main">跳到正文</a>

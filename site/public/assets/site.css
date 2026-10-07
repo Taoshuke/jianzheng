@@ -20,7 +20,7 @@
   --wide: 1080px;
   --measure: 680px;
   --gutter: 32px;
-  --font-scale: 1;
+  --font-scale: 0.95;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,7 +83,7 @@ img.emoji { display: inline-block; width: 1em; height: 1em; margin: 0 0.06em; ve
 .home-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-bottom: 4px; font-size: 0.8rem; color: var(--text-2); text-align: right; }
 .home-meta span + span { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-3); }
 /* 导语：纯文字，通栏排，左右边缘和抬头的横线对齐，两端对齐 */
-.home-lead { margin-top: 28px; font-size: calc(1.1rem * var(--font-scale)); line-height: 1.9; color: var(--text); text-align: justify; text-justify: inter-character; text-wrap: pretty; }
+.home-lead { margin-top: 28px; font-size: calc(1.1rem * var(--font-scale)); line-height: 1.84; color: var(--text); text-align: justify; text-justify: inter-character; text-wrap: pretty; }
 .home-lead + .home-lead { margin-top: 0.9em; }
 .home-lead a { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
 .home-lead a:hover { color: var(--accent); }
@@ -142,7 +142,7 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .byline { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 22px; font-family: var(--mono); font-size: 0.75rem; color: var(--text-2); }
 .byline span:first-child { font-family: var(--sans); font-size: 0.85rem; color: var(--text); }
 
-.editor-note { margin: 32px 0 8px; padding: 22px 26px 20px; background: var(--surface); border: 1px solid var(--rule); border-top: 2px solid var(--accent); font-size: calc(0.93rem * var(--font-scale)); line-height: 1.85; color: var(--text-2); }
+.editor-note { margin: 32px 0 8px; padding: 22px 26px 20px; background: var(--surface); border: 1px solid var(--rule); border-top: 2px solid var(--accent); font-size: calc(0.93rem * var(--font-scale)); line-height: 1.78; color: var(--text-2); }
 .editor-note-label { margin-bottom: 8px; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.22em; color: var(--accent); }
 .editor-note p + p { margin-top: 0.7em; }
 /* 编者注里引用的长段文字（如推文）：缩进一格、左侧细线，字色比注释略深，和编者自己的话分开 */
@@ -151,7 +151,7 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .editor-note a { color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; word-break: break-all; }
 
 .article-grid { position: relative; padding-top: 36px; }
-.prose { font-size: calc(1.09rem * var(--font-scale)); line-height: 1.95; color: var(--text); word-break: break-word; overflow-wrap: anywhere; }
+.prose { font-size: calc(1.09rem * var(--font-scale)); line-height: 1.88; color: var(--text); word-break: break-word; overflow-wrap: anywhere; }
 .prose > :first-child { margin-top: 0; }
 .prose p { margin: 1.05em 0; }
 /* 两端对齐：正文、引用、列表、编者注、时间线说明的右边缘齐平，末行照常左齐 */

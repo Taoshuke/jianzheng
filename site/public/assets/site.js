@@ -1,6 +1,6 @@
 (function () {
   // 字号三档，与 heibox.cc 用同一个 localStorage 键，读者在两站的习惯一致
-  var SCALES = [0.9, 1, 1.12];
+  var SCALES = [0.86, 0.95, 1.06];
   var buttons = document.querySelectorAll(".font-size button");
   var index = 1;
   try { var saved = localStorage.getItem("font-size-index"); if (saved !== null && SCALES[+saved]) index = +saved; } catch (e) {}
