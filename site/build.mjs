@@ -9,6 +9,7 @@ const SITE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(process.env.CONTENT_DIR || path.join(SITE_DIR, ".."));
 const OUT_DIR = path.join(SITE_DIR, "dist");
 const CONFIG = JSON.parse(fs.readFileSync(path.join(SITE_DIR, "site.config.json"), "utf8"));
+const SECTIONS = JSON.parse(fs.readFileSync(path.join(SITE_DIR, "sections.json"), "utf8"));
 const SITE_NAME = CONFIG.siteName;
 const SITE_URL = "https://zgzj.heibox.cc";
 const ABOUT_SLUG = "关于";
@@ -92,6 +93,34 @@ function parseArticle(rel) {
   };
 }
 
+// ---------- 编者分节：按 sections.json 给长文插小标题，原文不动 ----------
+
+function applySections(rel, body) {
+  const entries = SECTIONS[rel];
+  if (!entries) return { body, edited: false, promoted: false };
+  const lines = body.split("\n");
+  let from = 0, edited = false, promoted = false;
+  for (const e of entries) {
+    // 按顺序往后找，同样开头的段落出现两次时取前一个分节之后的那个
+    const idx = lines.findIndex((l, i) => i >= from && l.replace(/^>\s?/, "").trimStart().startsWith(e.before));
+    if (idx < 0) { console.warn(`分节找不到插入位置：${rel}「${e.before}」`); continue; }
+    const quote = lines[idx].startsWith(">") ? "> " : "";
+    const hashes = "#".repeat(e.level || 2);
+    if (e.title) {
+      lines.splice(idx, 0, `${quote}${hashes} ${e.title}`, quote.trim());
+      from = idx + 3;
+      edited = true;
+    } else {
+      const m = /^(?:>\s?)?\*\*(.+)\*\*\s*$/.exec(lines[idx]);
+      if (!m) { console.warn(`分节要升级的不是整段加粗：${rel}「${e.before}」`); continue; }
+      lines[idx] = `${quote}${hashes} ${m[1].trim()}`;
+      from = idx + 1;
+      promoted = true;
+    }
+  }
+  return { body: lines.join("\n"), edited, promoted };
+}
+
 // ---------- Markdown 渲染 ----------
 
 const slugify = (text) => stripTags(text).replace(/[\s　]+/g, "-").replace(/[、，。：；？！“”（）《》,.:;?!"()]/g, "").toLowerCase();
@@ -118,8 +147,9 @@ function makeMarked(fromRel, headings) {
       },
       heading({ tokens, depth }) {
         const html = this.parser.parseInline(tokens);
-        const id = slugify(html);
-        if (depth >= 2 && depth <= 3) headings.push({ id, depth, html });
+        let id = slugify(html);
+        for (let n = 2; headings.some((h) => h.id === id); n++) id = `${slugify(html)}-${n}`;
+        if (depth >= 2 && depth <= 4) headings.push({ id, depth, html });
         return `<h${depth} id="${esc(id)}">${html}</h${depth}>\n`;
       },
     },
@@ -332,7 +362,8 @@ function indexRow(a, number = null) {
 for (const a of articles) {
   const headings = [];
   const timeline = renderTimeline(a.body, a.rel);
-  const bodyHtml = timeline || renderMd(a.body, a.rel, headings);
+  const { body: sectioned, edited, promoted } = applySections(a.rel, a.body);
+  const bodyHtml = timeline || renderMd(sectioned, a.rel, headings);
   const c = a.folder ? collections[a.folder] : null;
   const idx = c ? c.items.indexOf(a) : -1;
   const next = c && idx < c.items.length - 1 ? c.items[idx + 1] : null;
@@ -341,9 +372,17 @@ for (const a of articles) {
   const kicker = c
     ? `<a href="${encodeUrl(`/${c.name}/`)}">${esc(c.name)}</a><span>${String(idx + 1).padStart(2, "0")} / ${String(c.items.length).padStart(2, "0")}</span>`
     : home ? `<a href="${encodeUrl(`/${home.name}/`)}">${esc(home.name)}</a><span>另见</span>` : "";
-  const toc = headings.length >= 2
-    ? `<aside class="toc" aria-label="本文目录"><p class="toc-label">目录</p><ol>${headings.map((h) => `<li class="toc-${h.depth}"><a href="#${esc(h.id)}">${h.html}</a></li>`).join("")}</ol></aside>`
-    : "";
+  // 目录：宽屏挂在正文右侧，窄屏放在编者注下面，可展开收起
+  let toc = "", tocInline = "";
+  if (headings.length >= 2) {
+    const top = Math.min(...headings.map((h) => h.depth));
+    // 原文自带小标题（Markdown 标题或被升级的加粗分节句）时，注明只是「部分」由编者所加
+    const hadOwn = promoted || /^#{2,4} /m.test(a.body);
+    const note = edited ? `<p class="toc-note">${hadOwn ? "部分" : ""}小标题为编者所加</p>` : "";
+    const list = `<ol>${headings.map((h) => `<li class="toc-l${h.depth - top}"><a href="#${esc(h.id)}">${h.html}</a></li>`).join("")}</ol>`;
+    toc = `<aside class="toc" aria-label="本文目录"><p class="toc-label">目录</p>${note}${list}</aside>`;
+    tocInline = `<details class="toc-inline"><summary>目录<span>${headings.length} 节</span></summary>${note}${list}</details>`;
+  }
   const seriesEnd = c ? `<section class="series-end">
   ${next ? `<a class="next-up" href="${encodeUrl(next.url)}"><span class="kicker">下一篇 · ${String(idx + 2).padStart(2, "0")}</span><span class="next-title">${emojify(esc(next.title))}</span><span class="next-summary">${esc(next.summary)}</span></a>`
     : `<div class="next-up next-up--done"><span class="kicker">专辑读完了</span><span class="next-title">${esc(c.name)}</span>${companionsLine(c)}</div>`}
@@ -358,6 +397,7 @@ for (const a of articles) {
     <p class="byline">${a.author ? `<span>文／${esc(a.author)}</span>` : ""}${a.date ? `<time>${fmtDate(a.date)}</time>` : ""}<span>约 ${a.minutes} 分钟读完</span></p>
   </header>
   ${a.note ? `<aside class="editor-note"><p class="editor-note-label">编者注</p>${renderMd(a.note, a.rel)}</aside>` : ""}
+  ${tocInline}
   <div class="article-grid">
     <div class="prose">${bodyHtml}</div>
     ${toc}

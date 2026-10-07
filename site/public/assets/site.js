@@ -50,6 +50,6 @@
         }
       });
     }, { rootMargin: "-20% 0px -70% 0px" });
-    document.querySelectorAll(".prose h2[id], .prose h3[id]").forEach(function (h) { io.observe(h); });
+    document.querySelectorAll(".prose h2[id], .prose h3[id], .prose h4[id]").forEach(function (h) { io.observe(h); });
   }
 })();
