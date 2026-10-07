@@ -1,18 +1,20 @@
 (function () {
   // 字号三档，与 heibox.cc 用同一个 localStorage 键，读者在两站的习惯一致
-  var SIZES = [{ label: "小", scale: 0.9 }, { label: "中", scale: 1 }, { label: "大", scale: 1.12 }];
-  var btn = document.querySelector(".font-size-toggle");
+  var SCALES = [0.9, 1, 1.12];
+  var buttons = document.querySelectorAll(".font-size button");
   var index = 1;
-  try { var saved = localStorage.getItem("font-size-index"); if (saved !== null && SIZES[+saved]) index = +saved; } catch (e) {}
+  try { var saved = localStorage.getItem("font-size-index"); if (saved !== null && SCALES[+saved]) index = +saved; } catch (e) {}
   function apply() {
-    document.documentElement.style.setProperty("--font-scale", String(SIZES[index].scale));
-    if (btn) btn.textContent = "字" + SIZES[index].label;
+    document.documentElement.style.setProperty("--font-scale", String(SCALES[index]));
+    buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.size === index)); });
   }
   apply();
-  if (btn) btn.addEventListener("click", function () {
-    index = (index + 1) % SIZES.length;
-    try { localStorage.setItem("font-size-index", String(index)); } catch (e) {}
-    apply();
+  buttons.forEach(function (b) {
+    b.addEventListener("click", function () {
+      index = +b.dataset.size;
+      try { localStorage.setItem("font-size-index", String(index)); } catch (e) {}
+      apply();
+    });
   });
 
   // 阅读进度：按正文区块计算，读到正文末尾即满

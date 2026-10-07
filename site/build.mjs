@@ -9,7 +9,7 @@ const SITE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const CONTENT_DIR = path.resolve(process.env.CONTENT_DIR || path.join(SITE_DIR, ".."));
 const OUT_DIR = path.join(SITE_DIR, "dist");
 const CONFIG = JSON.parse(fs.readFileSync(path.join(SITE_DIR, "site.config.json"), "utf8"));
-const SITE_NAME = "键政";
+const SITE_NAME = CONFIG.siteName;
 const SITE_URL = "https://jianzheng.heibox.cc";
 const ABOUT_SLUG = "关于";
 const SKIP_DIRS = new Set(["site", ".git", ".github", "node_modules"]);
@@ -204,7 +204,9 @@ function layout({ title, description = "", url, main, bodyClass = "" }) {
 <meta property="og:site_name" content="${SITE_NAME}">
 <meta name="theme-color" content="#fafaf8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#161616" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="/assets/favicon.png">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="alternate" type="application/atom+xml" title="${SITE_NAME}" href="/feed.xml">
@@ -233,7 +235,11 @@ function layout({ title, description = "", url, main, bodyClass = "" }) {
     </div>
   </div>
 </footer>
-<button class="font-size-toggle" type="button" title="切换字号" aria-label="切换字号">字中</button>
+<div class="font-size" role="group" aria-label="字号">
+  <button type="button" data-size="0" aria-label="小号字" aria-pressed="false">字</button>
+  <button type="button" data-size="1" aria-label="中号字" aria-pressed="true">字</button>
+  <button type="button" data-size="2" aria-label="大号字" aria-pressed="false">字</button>
+</div>
 <script src="/assets/site.js" defer></script>
 </body>
 </html>
@@ -381,7 +387,16 @@ write("index.html", layout({
   title: "",
   description: lead,
   url: "/",
-  main: `<section class="intro"><h1 class="visually-hidden">键政</h1><p>${esc(lead)}</p></section>
+  main: `<header class="home-head">
+  <div class="home-title-row">
+    <h1 class="home-title" aria-label="${esc(SITE_NAME)}">
+      <picture><source srcset="/assets/logo/moon-dark.svg" media="(prefers-color-scheme: dark)"><img class="home-moon" src="/assets/logo/moon.svg" alt=""></picture>
+      <picture><source srcset="/assets/logo/wordmark-dark.svg" media="(prefers-color-scheme: dark)"><img class="home-wordmark" src="/assets/logo/wordmark.svg" alt="${esc(SITE_NAME)}"></picture>
+    </h1>
+    <p class="home-meta"><span>${esc(CONFIG.tagline)}</span><span>${articles.length} 篇 · 更新于 ${BUILD_DATE}</span></p>
+  </div>
+  <p class="home-lead">${esc(lead)}</p>
+</header>
 ${Object.values(collections).map((c) => `<section class="section">${collectionHead(c)}${contentsList(c)}${companionsLine(c)}</section>`).join("\n")}
 <section class="section">
   <h2 class="section-title"><span>全部文章</span><span class="section-count">${articles.length}</span></h2>
@@ -435,7 +450,7 @@ write("404.html", layout({
 // ----- 字体子集：收集所有用衬线显示的文字 -----
 
 const serifText = [
-  "键政", "JIANZHENG", "篇目全部文章下一篇专辑读完了目录编者注这个页面不存在关于另见从第一篇读起",
+  "篇目全部文章下一篇专辑读完了目录编者注这个页面不存在关于另见从第一篇读起",
   CONFIG.tagline,
   ...articles.map((a) => a.title),
   ...Object.values(collections).flatMap((c) => [c.name, c.epigraph || ""]),
@@ -445,7 +460,6 @@ const serifText = [
 ].join("");
 const faces = (await Promise.all([
   fetchSerifSubset(serifText, 700, "serif-700.woff2"),
-  fetchSerifSubset("键政", 900, "serif-900.woff2"),
 ])).join("\n");
 fs.writeFileSync(path.join(OUT_DIR, "assets", "fonts.css"), faces + "\n");
 
