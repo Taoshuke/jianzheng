@@ -185,7 +185,8 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .article { position: relative; }
 @media (min-width: 1240px) {
   .article--toc .toc { display: block; position: absolute; top: 72px; bottom: 0; left: calc(100% + 32px); width: 232px; }
-  .toc-inner { position: sticky; top: 40px; max-height: calc(100vh - 80px); overflow-y: auto; scrollbar-width: none; }
+  /* 吸顶位置等于目录的起始位置，从一开始就不随正文滚动 */
+  .toc-inner { position: sticky; top: 72px; max-height: calc(100vh - 112px); overflow-y: auto; scrollbar-width: none; }
   .toc-inner::-webkit-scrollbar { display: none; }
   .toc-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 12px; margin-bottom: 6px; border-bottom: 1px solid var(--text); font-size: 0.82rem; font-weight: 700; color: var(--text); }
   .toc-count { font-family: var(--mono); font-size: 0.68rem; font-weight: 400; color: var(--text-3); }
