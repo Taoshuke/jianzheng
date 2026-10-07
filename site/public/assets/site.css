@@ -180,7 +180,7 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .prose img:not(.emoji) { display: block; margin: 1.6em auto; border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px -12px rgba(0,0,0,0.12); }
 .prose p:has(> img:not(.emoji):only-child) { margin: 0; }
 
-/* 宽屏目录：顶端和文章标题对齐，跟着滚动；顶层编号，下层只在读到所在那一节时展开 */
+/* 宽屏目录：顶端和文章标题对齐，跟着滚动；顶层编号。读到哪节只换颜色，不展开收起、不改字重，滚动时目录排版不变 */
 .toc { display: none; }
 .article { position: relative; }
 @media (min-width: 1240px) {
@@ -193,13 +193,12 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
   .toc-list--0 > .toc-item { border-bottom: 1px solid var(--rule); }
   .toc-list--0 > .toc-item > a { display: grid; grid-template-columns: 26px 1fr; align-items: baseline; padding: 9px 0; font-size: 0.82rem; line-height: 1.5; color: var(--text-2); transition: color 0.15s; }
   .toc-no { font-family: var(--mono); font-size: 0.66rem; color: var(--text-3); transition: color 0.15s; }
-  .toc-list--1, .toc-list--2 { display: none; padding: 0 0 8px 26px; }
-  .toc-item.is-open > .toc-list--1, .toc-list--1 .toc-item.is-open > .toc-list--2 { display: block; }
+  .toc-list--1 { padding: 0 0 8px 26px; }
   .toc-list--2 { padding: 0 0 2px 12px; }
   .toc-list--1 a, .toc-list--2 a { display: block; position: relative; padding: 4px 0 4px 12px; font-size: 0.76rem; line-height: 1.5; color: var(--text-3); transition: color 0.15s; }
   .toc-list--1 a::before, .toc-list--2 a::before { content: ""; position: absolute; left: 0; top: 0.95em; width: 4px; height: 1px; background: var(--rule-strong); }
   .toc-inner a:hover, .toc-inner a:hover .toc-no { color: var(--accent); }
-  .toc-item.is-open > a { color: var(--text); font-weight: 600; }
+  .toc-item.is-open > a { color: var(--text); }
   .toc-item.is-open > a .toc-no { color: var(--accent); }
   .toc-list--1 a.is-active, .toc-list--2 a.is-active { color: var(--accent); }
   .toc-inner .toc-note { margin: 14px 0 0; font-size: 0.7rem; color: var(--text-3); }
