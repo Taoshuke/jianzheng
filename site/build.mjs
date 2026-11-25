@@ -363,13 +363,6 @@ function contentsList(items, currentRel = null, { numbered = true } = {}) {
 const groupLabel = (label, count, url = null) =>
   `<p class="group-label">${url ? `<a href="${encodeUrl(url)}">${esc(label)}</a>` : `<span>${esc(label)}</span>`}<span class="group-count">${count} 篇</span></p>`;
 
-// 专辑在首页、专辑页的篇目：连读的各组编号，记录组按日期不编号
-function collectionContents(c) {
-  const named = c.series.length > 1 || c.series[0].name;
-  return c.series.map((s) => `${named ? groupLabel(s.name, s.items.length, s.url) : ""}${contentsList(s.items)}`).join("")
-    + (c.records.length ? `${groupLabel(c.recordsLabel, c.records.length)}${contentsList(c.records, null, { numbered: false })}` : "");
-}
-
 function companionsLine(c) {
   if (!c.companions.length) return "";
   return `<p class="companions"><span class="label">另见</span>${c.companions.map((a) => `<a href="${encodeUrl(a.url)}">${emojify(esc(a.title))}</a>`).join("")}</p>`;
@@ -389,6 +382,19 @@ function collectionHead(c, { asPageTitle = false } = {}) {
   ${name}
   ${c.epigraph ? `<p class="epigraph">${esc(c.epigraph)}${c.epigraphSource ? `<cite>${esc(c.epigraphSource)}</cite>` : ""}</p>` : ""}
 </header>`;
+}
+
+// 首页专辑卡片：不展开目录，只给名称、题记（没有题记用 README 首句）、篇数和最新一篇的日期，点进专辑页看全部篇目
+const collectionSub = (c) => c.epigraph || stripTags(renderMd(c.intro, `${c.name}/README.md`)).trim();
+function collectionCard(c) {
+  const items = [...c.series.flatMap((s) => s.items), ...c.records];
+  const latestDate = items.map((a) => a.date).filter(Boolean).sort().pop();
+  const sub = collectionSub(c);
+  return `<li><a class="collection-card" href="${encodeUrl(`/${c.name}/`)}">
+  <span class="collection-card-title">${esc(c.name)}</span>
+  ${sub ? `<span class="collection-card-sub">${esc(sub)}</span>` : ""}
+  <span class="collection-card-meta">${items.length} 篇${latestDate ? ` · 更新于 ${fmtDate(latestDate)}` : ""}</span>
+</a></li>`;
 }
 
 function indexRow(a, number = null) {
@@ -528,7 +534,10 @@ write("index.html", layout({
   </div>
   ${homeIntro}
 </header>
-${Object.values(collections).map((c) => `<section class="section">${collectionHead(c)}${collectionContents(c)}${companionsLine(c)}</section>`).join("\n")}
+<section class="section">
+  <h2 class="section-title"><span>专辑</span><span class="section-count">${Object.keys(collections).length}</span></h2>
+  <ul class="collection-cards">${Object.values(collections).map(collectionCard).join("")}</ul>
+</section>
 <section class="section">
   <h2 class="section-title"><span>全部文章</span><span class="section-count">${articles.length}</span></h2>
   <ol class="index">${latest.map((a) => indexRow(a)).join("")}</ol>
@@ -586,7 +595,7 @@ const serifText = [
   ...articles.map((a) => a.title),
   // 编者注里一来一回的引文，评论那一段用衬线粗体排
   ...articles.filter((a) => a.note && /^#### /m.test(a.note)).map((a) => a.note),
-  ...Object.values(collections).flatMap((c) => [c.name, c.epigraph || "", ...c.series.map((s) => s.name || "")]),
+  ...Object.values(collections).flatMap((c) => [c.name, collectionSub(c), ...c.series.map((s) => s.name || "")]),
   ...articles.flatMap((a) => [...a.body.matchAll(/^#{1,3} (.+)$/gm)].map((m) => m[1])),
   ...[...about.matchAll(/^#{1,3} (.+)$/gm)].map((m) => m[1]),
   "0123456789",
