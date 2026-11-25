@@ -1,21 +1,42 @@
 (function () {
   // 字号三档，与 heibox.cc 用同一个 localStorage 键，读者在两站的习惯一致
   var SCALES = [0.86, 0.95, 1.06];
-  var buttons = document.querySelectorAll(".font-size button");
+  var NAMES = ["小", "中", "大"];
+  var dock = document.querySelector(".fs-dock");
+  var tog = dock.querySelector(".fs-dock-tog");
+  var steps = dock.querySelectorAll("[data-step]");
+  var nameEl = dock.querySelector(".fs-dock-name");
   var index = 1;
   try { var saved = localStorage.getItem("font-size-index"); if (saved !== null && SCALES[+saved]) index = +saved; } catch (e) {}
   function apply() {
     document.documentElement.style.setProperty("--font-scale", String(SCALES[index]));
-    buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.size === index)); });
+    nameEl.textContent = NAMES[index];
+    steps[0].disabled = index === 0;
+    steps[1].disabled = index === SCALES.length - 1;
   }
   apply();
-  buttons.forEach(function (b) {
+  steps.forEach(function (b) {
     b.addEventListener("click", function () {
-      index = +b.dataset.size;
+      index = Math.min(SCALES.length - 1, Math.max(0, index + +b.dataset.step));
       try { localStorage.setItem("font-size-index", String(index)); } catch (e) {}
       apply();
     });
   });
+  function setOpen(open) { dock.classList.toggle("open", open); tog.setAttribute("aria-expanded", String(open)); if (open) dock.classList.remove("away"); }
+  tog.addEventListener("click", function () { setOpen(!dock.classList.contains("open")); });
+  document.addEventListener("pointerdown", function (e) { if (!dock.contains(e.target)) setOpen(false); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") setOpen(false); });
+
+  // 往下读正文时字号钮和回到顶部一起让开，往回翻或到页首页尾再出现
+  var floaters = [dock, document.querySelector(".to-top-btn")].filter(Boolean);
+  var lastY = window.scrollY;
+  window.addEventListener("scroll", function () {
+    var y = window.scrollY;
+    var atEnd = y + window.innerHeight >= document.documentElement.scrollHeight - 40;
+    var away = y > lastY && y > 120 && !atEnd && !dock.classList.contains("open");
+    floaters.forEach(function (el) { el.classList.toggle("away", away); });
+    lastY = y;
+  }, { passive: true });
 
   // 分享：调用系统分享面板，不支持的浏览器不显示按钮
   if (navigator.share) {

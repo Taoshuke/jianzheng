@@ -277,11 +277,14 @@ function layout({ title, description = "", url, main, bodyClass = "" }) {
     </div>
   </div>
 </footer>
-<a class="to-top-btn" href="#" title="回到顶部" aria-label="回到顶部"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-<div class="font-size" role="group" aria-label="字号">
-  <button type="button" data-size="0" aria-label="小号字" aria-pressed="false">字</button>
-  <button type="button" data-size="1" aria-label="中号字" aria-pressed="true">字</button>
-  <button type="button" data-size="2" aria-label="大号字" aria-pressed="false">字</button>
+<a class="to-top-btn" href="#" title="回到顶部" aria-label="回到顶部"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+<div class="fs-dock">
+  <div class="fs-dock-row">
+    <button type="button" data-step="-1" aria-label="缩小字号" title="缩小字号"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.5l5-11 5 11M4.8 9.6h6.4"/></svg></button>
+    <span class="fs-dock-name" aria-live="polite">中</span>
+    <button type="button" data-step="1" aria-label="放大字号" title="放大字号"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13.5l5-11 5 11M4.8 9.6h6.4"/></svg></button>
+  </div>
+  <button type="button" class="fs-dock-tog" aria-expanded="false" aria-label="字号" title="字号"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 13l3-8 3 8M2.6 10.2h3.8M8.5 13l2.75-7.5L14 13M9.5 10.6h3.5"/></svg></button>
 </div>
 <script src="/assets/site.js" defer></script>
 </body>
