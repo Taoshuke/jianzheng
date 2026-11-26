@@ -90,8 +90,12 @@ function parseArticle(rel) {
   }
   const body = lines.slice(i).join("\n").trim();
   // 正文开头（跳过小标题）先是列表、图片、引文或表格时，往下找到的「首段」在某一节中间，不适合当摘要；有编者注就改用编者注首句
-  const firstBlock = body.split(/\n\n/).find((p) => p && !/^#/.test(p)) || "";
-  const firstPara = note && /^(!\[|>|-|\|)/.test(firstBlock)
+  const blocks = body.split(/\n\n/);
+  const firstIdx = blocks.findIndex((p) => p && !/^#/.test(p));
+  const firstBlock = blocks[firstIdx] || "";
+  // 条目式文章（#### 小标题下先是一行出处信息）不拿出处行作摘要
+  const underH4 = firstIdx > 0 && /^####\s/.test(blocks[firstIdx - 1]);
+  const firstPara = note && (underH4 || /^(!\[|>|-|\|)/.test(firstBlock))
     ? (note.split(/\n\n/)[0].match(/^[^。！？]*[。！？]?/) || [""])[0]
     : body.split(/\n\n/).find((p) => p && !/^(#|!\[|>|-|\|)/.test(p)) || "";
   const summary = firstPara.replace(/\*\*|`|\[|\]\([^)]*\)/g, "").slice(0, 140);

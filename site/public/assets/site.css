@@ -211,6 +211,14 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .prose p, .editor-note p, .tl-caption p { text-align: justify; text-justify: inter-character; }
 .prose h1, .prose h2, .prose h3, .prose h4 { font-family: var(--serif); font-weight: 700; letter-spacing: 0.01em; }
 .prose h4 { font-size: 1.08em; line-height: 1.5; margin: 1.9em 0 0.5em; }
+/* 条目式文章（正文直接含 #### 的，如评论存档）：
+   组名 h3 改成小号标签；每条以 #### 账号名起头，条与条之间细线隔开；
+   出处行小号灰字；截图按手机宽度 432px 显示，使图中文字与正文字号相当 */
+.prose:has(> h4) h3 { margin: 2.6em 0 0; padding-bottom: 0.6em; border-bottom: 1px solid var(--text); font-family: var(--sans); font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.14em; color: var(--accent); }
+.prose > h4 { margin-top: 2.2em; padding-top: 2em; border-top: 1px solid var(--rule); }
+.prose > h3 + h4 { margin-top: 1.4em; padding-top: 0; border-top: none; }
+.prose > h4 + p { margin: 0.15em 0 0.8em; font-family: var(--sans); font-size: var(--fs-meta); color: var(--text-3); }
+.prose:has(> h4) p > img:not(.emoji) { width: 432px; max-width: 100%; margin: 1.1em 0 0; }
 .prose blockquote h3, .prose blockquote h4 { color: var(--text); }
 .prose h1 { font-size: 1.7em; line-height: 1.35; margin: 1.8em 0 0.6em; }
 /* 二级、三级标题拉开差距：二级是节，三级是节里的条目（如按日期排的一条条记录） */
