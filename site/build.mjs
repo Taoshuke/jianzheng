@@ -386,8 +386,10 @@ function recordsLine(c) {
 // 专辑抬头：专辑名和题记，不做大横幅；专辑页上方留一行「首页 /」面包屑
 function collectionHead(c, { asPageTitle = false } = {}) {
   const name = asPageTitle ? `<h1 class="collection-title">${esc(c.name)}</h1>` : `<h2 class="collection-title"><a href="${encodeUrl(`/${c.name}/`)}">${esc(c.name)}</a></h2>`;
+  const cover = coverFor(c.name);
   return `<header class="collection-head">
   ${asPageTitle ? `<p class="kicker">${HOME_CRUMB}</p>` : ""}
+  ${asPageTitle && cover !== "/assets/og.png" ? `<img class="collection-cover" src="${encodeUrl(cover)}" alt="" width="1200" height="630">` : ""}
   ${name}
   ${c.epigraph ? `<p class="epigraph">${esc(c.epigraph)}${c.epigraphSource ? `<cite>${esc(c.epigraphSource)}</cite>` : ""}</p>` : ""}
 </header>`;
@@ -399,7 +401,9 @@ function collectionCard(c) {
   const items = [...c.series.flatMap((s) => s.items), ...c.records];
   const latestDate = items.map((a) => a.date).filter(Boolean).sort().pop();
   const sub = collectionSub(c);
+  const cover = coverFor(c.name);
   return `<li><a class="collection-card" href="${encodeUrl(`/${c.name}/`)}">
+  ${cover !== "/assets/og.png" ? `<img class="collection-card-thumb" src="${encodeUrl(cover)}" alt="" width="1200" height="630" loading="lazy">` : `<span class="collection-card-thumb"></span>`}
   <span class="collection-card-title">${esc(c.name)}</span>
   ${sub ? `<span class="collection-card-sub">${esc(sub)}</span>` : ""}
   <span class="collection-card-meta">${items.length} 篇${latestDate ? ` · 更新于 ${fmtDate(latestDate)}` : ""}</span>
