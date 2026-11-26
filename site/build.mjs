@@ -89,7 +89,11 @@ function parseArticle(rel) {
     note = buf.join("\n").replace(/^\*\*编者注\*\*[\s　]*/, "");
   }
   const body = lines.slice(i).join("\n").trim();
-  const firstPara = body.split(/\n\n/).find((p) => p && !/^(#|!\[|>|-|\|)/.test(p)) || "";
+  // 正文开头（跳过小标题）先是列表、图片、引文或表格时，往下找到的「首段」在某一节中间，不适合当摘要；有编者注就改用编者注首句
+  const firstBlock = body.split(/\n\n/).find((p) => p && !/^#/.test(p)) || "";
+  const firstPara = note && /^(!\[|>|-|\|)/.test(firstBlock)
+    ? (note.split(/\n\n/)[0].match(/^[^。！？]*[。！？]?/) || [""])[0]
+    : body.split(/\n\n/).find((p) => p && !/^(#|!\[|>|-|\|)/.test(p)) || "";
   const summary = firstPara.replace(/\*\*|`|\[|\]\([^)]*\)/g, "").slice(0, 140);
   const textLen = body.replace(/!\[[^\]]*\]\([^)]*\)|[#>*`\-|]|\s/g, "").length;
   return {
