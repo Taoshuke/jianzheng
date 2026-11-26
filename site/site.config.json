@@ -8,7 +8,11 @@
   "collections": {
     "今月定将照后人": {
       "epigraph": "今人不见古时月，今月曾经照古人。",
-      "epigraphSource": "李白《把酒问月》"
+      "epigraphSource": "李白《把酒问月》",
+      "cover": "jinyue.jpg"
+    },
+    "大驱逐时代": {
+      "cover": "deportation.jpg"
     }
   }
 }

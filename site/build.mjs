@@ -229,10 +229,14 @@ const HOME_CRUMB = `<a href="/">首页</a><span class="crumb-sep" aria-hidden="t
 
 const fmtDate = (d) => (d ? d.replace(/-/g, ".") : "");
 
-// 分享封面：同一专辑共用一张插图 public/assets/cover/<专辑>.jpg，没有就用全站默认图
-const coverFor = (folder) =>
-  folder && fs.existsSync(path.join(SITE_DIR, "public", "assets", "cover", `${folder}.jpg`))
-    ? `/assets/cover/${folder}.jpg` : "/assets/og.png";
+// 分享封面：同一专辑共用一张插图，文件名在 site.config.json 的 collections.<专辑>.cover 里，
+// 放在 public/assets/cover/。文件名用英文：中文路径编码后有的社交平台爬虫处理不好。没有就用全站默认图
+const coverFor = (folder) => {
+  const file = folder && CONFIG.collections?.[folder]?.cover;
+  return file && fs.existsSync(path.join(SITE_DIR, "public", "assets", "cover", file)) ? `/assets/cover/${file}` : "/assets/og.png";
+};
+// 分享按钮：只走系统分享面板，浏览器不支持时保持 hidden，由 site.js 判断后显示
+const shareBtn = (title, label, cls = "") => `<button class="share-btn${cls}" type="button" data-share-title="${esc(title)}" hidden><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8M5 11.5V20h14v-8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${label}</span></button>`;
 
 function layout({ title, description = "", url, main, bodyClass = "", cover = "/assets/og.png" }) {
   const fullTitle = title ? `${plainTitle(title)} — ${SITE_NAME}` : `${SITE_NAME} · ${CONFIG.tagline}`;
@@ -253,6 +257,7 @@ function layout({ title, description = "", url, main, bodyClass = "", cover = "/
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="${SITE_NAME}：${esc(CONFIG.tagline)}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${SITE_URL}${encodeUrl(cover)}">
 <meta name="theme-color" content="#fafaf8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#161616" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -383,9 +388,11 @@ function recordsLine(c) {
   return `<p class="companions"><span class="label">${esc(c.recordsLabel)}</span>${c.records.map((a) => `<a href="${encodeUrl(a.url)}">${emojify(esc(a.title))}</a>`).join("")}</p>`;
 }
 
-// 专辑抬头：专辑名和题记，不做大横幅；专辑页上方留一行「首页 /」面包屑
+// 专辑抬头：面包屑、封面横幅、专辑名（右侧分享按钮）、题记
 function collectionHead(c, { asPageTitle = false } = {}) {
-  const name = asPageTitle ? `<h1 class="collection-title">${esc(c.name)}</h1>` : `<h2 class="collection-title"><a href="${encodeUrl(`/${c.name}/`)}">${esc(c.name)}</a></h2>`;
+  const name = asPageTitle
+    ? `<div class="collection-title-row"><h1 class="collection-title">${esc(c.name)}</h1>${shareBtn(c.name, "分享")}</div>`
+    : `<h2 class="collection-title"><a href="${encodeUrl(`/${c.name}/`)}">${esc(c.name)}</a></h2>`;
   const cover = coverFor(c.name);
   return `<header class="collection-head">
   ${asPageTitle ? `<p class="kicker">${HOME_CRUMB}</p>` : ""}
@@ -482,14 +489,12 @@ for (const a of articles) {
     : rc ? `<section class="series-end">${rc.series.map((x) => `<div class="series-all"><p class="kicker">${esc(x.name || rc.name)} · ${x.items.length} 篇</p>${contentsList(x.items)}</div>`).join("")}<div class="series-all"><p class="kicker">${esc(rc.recordsLabel)} · ${rc.records.length} 篇</p>${contentsList(rc.records, a.rel, { numbered: false })}</div></section>`
     : home ? `<section class="series-end"><div class="series-all"><p class="kicker">${esc(home.name)} · ${home.series[0].items.length} 篇</p>${contentsList(home.series[0].items)}</div></section>` : "";
 
-  // 只走系统分享面板，浏览器不支持时按钮保持 hidden，由 site.js 判断后显示
-  const shareBtn = (label, cls) => `<button class="share-btn${cls}" type="button" data-share-title="${esc(a.title)}" hidden><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8M5 11.5V20h14v-8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${label}</span></button>`;
   const main = `<article class="article${timeline ? " article--timeline" : ""}${toc ? " article--toc" : ""}">
   ${toc}
   <header class="article-head">
     <p class="kicker kicker--article">${HOME_CRUMB}${kicker}</p>
     <h1 class="article-title">${emojify(esc(a.title))}</h1>
-    <p class="byline">${a.author ? `<span>文／${esc(a.author)}</span>` : ""}${a.date ? `<time>${fmtDate(a.date)}</time>` : ""}<span>约 ${a.minutes} 分钟读完</span>${shareBtn("分享", "")}</p>
+    <p class="byline">${a.author ? `<span>文／${esc(a.author)}</span>` : ""}${a.date ? `<time>${fmtDate(a.date)}</time>` : ""}<span>约 ${a.minutes} 分钟读完</span>${shareBtn(a.title, "分享")}</p>
     ${a.source ? `<p class="source-line"><span class="source-label">${esc(a.source.label)}</span><a href="${esc(a.source.url)}" target="_blank" rel="noopener">${esc(a.source.url.replace(/^https?:\/\//, ""))}<span aria-hidden="true"> ↗</span></a></p>` : ""}
   </header>
   ${a.note ? `<aside class="editor-note${/^#### /m.test(a.note) ? " editor-note--exchange" : ""}"><p class="editor-note-label">编者注</p>${renderMd(a.note, a.rel)}</aside>` : ""}
@@ -497,7 +502,7 @@ for (const a of articles) {
   <div class="article-grid">
     <div class="prose">${bodyHtml}</div>
   </div>
-  <div class="share-end">${shareBtn("分享这篇文章", " share-btn--end")}</div>
+  <div class="share-end">${shareBtn(a.title, "分享这篇文章", " share-btn--end")}</div>
   ${seriesEnd}
 </article>`;
   write(outFileFor(a.rel), layout({ title: a.title, description: a.summary, url: a.url, main, bodyClass: "is-article", cover: coverFor(a.folder) }));
