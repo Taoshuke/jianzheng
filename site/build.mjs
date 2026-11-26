@@ -390,8 +390,12 @@ function recordsLine(c) {
 
 // 专辑抬头：面包屑、封面横幅、专辑名（右侧分享按钮）、题记
 function collectionHead(c, { asPageTitle = false } = {}) {
+  // 专辑页照文章页排：标题下一行信息栏，篇数和最近更新在左，分享在右端
+  const items = [...c.series.flatMap((s) => s.items), ...c.records];
+  const latest = items.map((a) => a.date).filter(Boolean).sort().pop();
   const name = asPageTitle
-    ? `<div class="collection-title-row"><h1 class="collection-title">${esc(c.name)}</h1>${shareBtn(c.name, "分享")}</div>`
+    ? `<h1 class="collection-title">${esc(c.name)}</h1>
+  <p class="byline"><span>${items.length} 篇</span>${latest ? `<time>更新于 ${fmtDate(latest)}</time>` : ""}${shareBtn(c.name, "分享")}</p>`
     : `<h2 class="collection-title"><a href="${encodeUrl(`/${c.name}/`)}">${esc(c.name)}</a></h2>`;
   const cover = coverFor(c.name);
   return `<header class="collection-head">
