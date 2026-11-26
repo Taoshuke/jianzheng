@@ -401,15 +401,16 @@ function collectionCard(c) {
 </a></li>`;
 }
 
-function indexRow(a, number = null) {
+// 篇目行：左栏一律是日期，首页和专辑页同一个样式
+function indexRow(a) {
   const kicker = a.group ? `${a.folder} · ${a.group}`
     : recordOf[a.rel] ? `${a.folder} · ${recordOf[a.rel].recordsLabel}`
     : a.folder || (companionOf[a.rel] ? `${companionOf[a.rel].name} · 另见` : "");
   return `<li class="index-row">
   <a href="${encodeUrl(a.url)}">
-    ${number ? `<span class="index-no">${String(number).padStart(2, "0")}</span>` : `<time class="index-date">${fmtDate(a.date)}</time>`}
+    <time class="index-date">${fmtDate(a.date)}</time>
     <div class="index-body">
-      ${number ? `<p class="kicker">${a.author ? `文／${esc(a.author)} · ` : ""}${fmtDate(a.date)}</p>` : kicker || a.author ? `<p class="kicker">${esc(kicker)}${kicker && a.author ? " · " : ""}${a.author ? `文／${esc(a.author)}` : ""}</p>` : ""}
+      ${kicker || a.author ? `<p class="kicker">${esc(kicker)}${kicker && a.author ? " · " : ""}${a.author ? `文／${esc(a.author)}` : ""}</p>` : ""}
       <h3 class="index-title">${emojify(esc(a.title))}</h3>
       ${a.summary ? `<p class="index-summary">${esc(a.summary)}</p>` : ""}
     </div>
@@ -499,7 +500,7 @@ for (const c of Object.values(collections)) {
   const named = c.series.length > 1 || c.series[0].name;
   const main = `<section class="section section--first">
   ${collectionHead(c, { asPageTitle: true })}
-  ${c.series.map((s) => `${named ? groupLabel(s.name, s.items.length, s.url) : ""}<ol class="index">${s.items.map((a, n) => indexRow(a, n + 1)).join("")}</ol>`).join("")}
+  ${c.series.map((s) => `${named ? groupLabel(s.name, s.items.length, s.url) : ""}<ol class="index">${s.items.map((a) => indexRow(a)).join("")}</ol>`).join("")}
   ${c.records.length ? `${groupLabel(c.recordsLabel, c.records.length)}<ol class="index">${c.records.map((a) => indexRow(a)).join("")}</ol>` : ""}
   ${companionsLine(c)}
 </section>`;
@@ -508,7 +509,7 @@ for (const c of Object.values(collections)) {
   for (const s of c.series.filter((x) => x.name)) {
     const sub = `<section class="section section--first">
   <header class="collection-head"><p class="kicker">${HOME_CRUMB}<a href="${encodeUrl(`/${c.name}/`)}">${esc(c.name)}</a><span class="crumb-sep" aria-hidden="true">/</span></p><h1 class="collection-title">${esc(s.name)}</h1></header>
-  <ol class="index">${s.items.map((a, n) => indexRow(a, n + 1)).join("")}</ol>
+  <ol class="index">${s.items.map((a) => indexRow(a)).join("")}</ol>
 </section>`;
     write(`${c.name}/${s.name}/index.html`, layout({ title: `${s.name} · ${c.name}`, description: c.epigraph || "", url: s.url, main: sub }));
   }
