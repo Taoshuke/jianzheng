@@ -219,6 +219,9 @@ h1.collection-title { font-size: calc(2.2rem * var(--font-scale)); }
 .prose > h3 + h4 { margin-top: 1.4em; padding-top: 0; border-top: none; }
 .prose > h4 + p { margin: 0.15em 0 0.8em; font-family: var(--sans); font-size: var(--fs-meta); color: var(--text-3); }
 .prose:has(> h4) p > img:not(.emoji) { width: 432px; max-width: 100%; margin: 1.1em 0 0; }
+.prose:has(> h4) table { display: table; font-size: 0.86em; }
+.prose:has(> h4) td { padding: 0.42em 0.8em; white-space: nowrap; }
+.prose:has(> h4) td:first-child { white-space: normal; }
 .prose blockquote h3, .prose blockquote h4 { color: var(--text); }
 .prose h1 { font-size: 1.7em; line-height: 1.35; margin: 1.8em 0 0.6em; }
 /* 二级、三级标题拉开差距：二级是节，三级是节里的条目（如按日期排的一条条记录） */
