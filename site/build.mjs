@@ -229,7 +229,12 @@ const HOME_CRUMB = `<a href="/">首页</a><span class="crumb-sep" aria-hidden="t
 
 const fmtDate = (d) => (d ? d.replace(/-/g, ".") : "");
 
-function layout({ title, description = "", url, main, bodyClass = "" }) {
+// 分享封面：同一专辑共用一张插图 public/assets/cover/<专辑>.jpg，没有就用全站默认图
+const coverFor = (folder) =>
+  folder && fs.existsSync(path.join(SITE_DIR, "public", "assets", "cover", `${folder}.jpg`))
+    ? `/assets/cover/${folder}.jpg` : "/assets/og.png";
+
+function layout({ title, description = "", url, main, bodyClass = "", cover = "/assets/og.png" }) {
   const fullTitle = title ? `${plainTitle(title)} — ${SITE_NAME}` : `${SITE_NAME} · ${CONFIG.tagline}`;
   return `<!doctype html>
 <html lang="zh-CN">
@@ -243,7 +248,7 @@ function layout({ title, description = "", url, main, bodyClass = "" }) {
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${esc(SITE_URL + encodeUrl(url))}">
 <meta property="og:site_name" content="${SITE_NAME}">
-<meta property="og:image" content="${SITE_URL}/assets/og.png">
+<meta property="og:image" content="${SITE_URL}${encodeUrl(cover)}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="${SITE_NAME}：${esc(CONFIG.tagline)}">
@@ -491,7 +496,7 @@ for (const a of articles) {
   <div class="share-end">${shareBtn("分享这篇文章", " share-btn--end")}</div>
   ${seriesEnd}
 </article>`;
-  write(outFileFor(a.rel), layout({ title: a.title, description: a.summary, url: a.url, main, bodyClass: "is-article" }));
+  write(outFileFor(a.rel), layout({ title: a.title, description: a.summary, url: a.url, main, bodyClass: "is-article", cover: coverFor(a.folder) }));
 }
 
 // ----- 专辑页 -----
@@ -504,14 +509,14 @@ for (const c of Object.values(collections)) {
   ${c.records.length ? `${groupLabel(c.recordsLabel, c.records.length)}<ol class="index">${c.records.map((a) => indexRow(a)).join("")}</ol>` : ""}
   ${companionsLine(c)}
 </section>`;
-  write(`${c.name}/index.html`, layout({ title: c.name, description: c.epigraph || stripTags(renderMd(c.intro, `${c.name}/README.md`)), url: `/${c.name}/`, main }));
+  write(`${c.name}/index.html`, layout({ title: c.name, description: c.epigraph || stripTags(renderMd(c.intro, `${c.name}/README.md`)), url: `/${c.name}/`, main, cover: coverFor(c.name) }));
   // 组页：面包屑回到专辑，组名作页面标题
   for (const s of c.series.filter((x) => x.name)) {
     const sub = `<section class="section section--first">
   <header class="collection-head"><p class="kicker">${HOME_CRUMB}<a href="${encodeUrl(`/${c.name}/`)}">${esc(c.name)}</a><span class="crumb-sep" aria-hidden="true">/</span></p><h1 class="collection-title">${esc(s.name)}</h1></header>
   <ol class="index">${s.items.map((a) => indexRow(a)).join("")}</ol>
 </section>`;
-    write(`${c.name}/${s.name}/index.html`, layout({ title: `${s.name} · ${c.name}`, description: c.epigraph || "", url: s.url, main: sub }));
+    write(`${c.name}/${s.name}/index.html`, layout({ title: `${s.name} · ${c.name}`, description: c.epigraph || "", url: s.url, main: sub, cover: coverFor(c.name) }));
   }
 }
 
